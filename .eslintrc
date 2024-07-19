@@ -1,0 +1,24 @@
+{
+  "root": true,
+  "extends": [
+    "plugin:vue/essential",
+    "eslint:recommended",
+    "plugin:prettier/recommended" // 冲突时使用prettier的规则进行覆盖
+  ],
+  "plugins": ["vue", "prettier"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "globals": {
+    "yz": "readonly",
+    "createPage": "readonly",
+    "extendPage": "readonly",
+    "extendApp": "readonly",
+    "page": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": [2, { "vars": "all", "args": "none" }],
+    "vue/multi-word-component-names": [0, { "ignores": ["main"] }]
+  }
+}

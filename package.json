@@ -1,0 +1,30 @@
+{
+  "name": "cloud-client",
+  "description": "消费者端定制",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "yzc dev",
+    "build": "yzc build",
+    "clean": "yzc clean",
+    "save": "yzc save"
+  },
+  "devDependencies": {
+    "@youzan-cloud/create-project": "*",
+    "@youzan-cloud/developer-cli": "*",
+    "@youzan-cloud/developer-client-presets": "*",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-vue": "^8.7.1",
+    "prettier": "^2.8.8"
+  },
+  "license": "MIT",
+  "browserslist": [
+    "Android >= 4.0",
+    "iOS >= 8"
+  ],
+  "dependencies": {
+    "@youzan-cloud/tee-ui": "^2.2.8"
+  }
+}
