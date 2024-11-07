@@ -10,9 +10,8 @@
     "save": "yzc save"
   },
   "devDependencies": {
-    "@youzan-cloud/create-project": "*",
-    "@youzan-cloud/developer-cli": "*",
-    "@youzan-cloud/developer-client-presets": "*",
+    "@youzan-cloud/developer-cli": "1.6.2",
+    "@youzan-cloud/developer-client-presets": "1.3.14",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -25,6 +24,6 @@
     "iOS >= 8"
   ],
   "dependencies": {
-    "@youzan-cloud/tee-ui": "^2.2.8"
+    "@youzan-cloud/tee-ui": "*"
   }
 }
