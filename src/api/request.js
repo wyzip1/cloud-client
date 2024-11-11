@@ -22,7 +22,10 @@ function getRequest(yz, isDev) {
         path: config.url,
         method: config.method,
         data: config.data,
-        header: config.header,
+        header: {
+          "content-type": "application/json;charset=UTF-8",
+          ...config.header,
+        },
         timeout: config.timeout,
         dev,
       })
@@ -34,25 +37,25 @@ function getRequest(yz, isDev) {
             ? res.data.message
             : "";
 
-        console.log("");
-        console.log("-----------------------------------");
-        console.log(`request URL - ${config.method || "GET"}:`, config.url);
-        console.log("request params:", { ...config.data, dev });
-        console.log(`request ${errorInfo ? "error" : "success"}:`, res);
-        console.log("-----------------------------------");
-        console.log("");
-
         if (errorInfo) {
           return Promise.reject(res);
         }
 
-        return res;
+        console.log("");
+        console.log("-----------------------------------");
+        console.log(`request URL - ${config.method || "GET"}:`, config.url);
+        console.log("request params:", { ...config.data, dev });
+        console.log(`request success:`, res);
+        console.log("-----------------------------------");
+        console.log("");
+
+        return res.data;
       })
       .catch((err) => {
         console.log("");
         console.log("-----------------------------------");
         console.log(`request URL - ${config.method || "GET"}:`, config.url);
-        console.log("request params:", config.data);
+        console.log("request params:", { ...config.data, dev });
         console.log("request error:", err);
         console.log("-----------------------------------");
         console.log("");
