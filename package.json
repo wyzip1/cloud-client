@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "@youzan-cloud/developer-cli": "1.7.0",
-    "@youzan-cloud/developer-client-presets": "1.4.0"
+    "@youzan-cloud/developer-client-presets": "1.4.0",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-prettier": "^4.2.1",
