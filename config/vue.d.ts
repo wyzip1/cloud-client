@@ -4,40 +4,40 @@ import getRequest from '../src/api/request';
 
 type CustomRequest = ReturnType<typeof getRequest>;
 
-interface YzPageApi {
-  data: {
-    user: {
-      info: {
-        mobile: string
-        gender: number
-        yzOpenId: string
-        avatar?: string;
-        nickname?: string;
+declare global {
+  interface YzPageApi {
+    data: {
+      user: {
+        info: {
+          mobile: string
+          gender: number
+          yzOpenId: string
+          avatar?: string;
+          nickname?: string;
+        },
+        state: {
+          protocol: boolean
+          mobile: boolean
+          nicknameAndAvatar: boolean
+        }
       },
-      state: {
-        protocol: boolean
-        mobile: boolean
-        nicknameAndAvatar: boolean
+      shop: {
+        kdtId: number	    // 店铺id	-
+        shopName: string	  // 店铺名称	-
+        logo: string	      // 店铺logo	-
+      },
+      appStyle: {
+        style: string;
+        config: {}
       }
     },
-    shop: {
-      kdtId: number	    // 店铺id	-
-      shopName: string	  // 店铺名称	-
-      logo: string	      // 店铺logo	-
-    },
-    appStyle: {
-      style: string;
-      config: {}
+    app: {
+      getApi: () => ReturnType<typeof registerRequestApi>
+      customRequest: CustomRequest
     }
-  },
-  app: {
-    getApi: () => ReturnType<typeof registerRequestApi>
-    customRequest: CustomRequest
-    getCustomUrl: (key: string, options?: { dev?: boolean }) => string;
-    isDev: () => boolean
+  
+    $getPageQuery: () => Record<string, any>
   }
-
-  $getPageQuery: () => Record<string, any>
 }
 
 // Vue has the constructor type in types/vue.d.ts
