@@ -54,6 +54,9 @@ export default {
   },
   methods: {
     onChange(list) {
+      this.$emit("before-change", (format) => {
+        list = typeof format === "function" ? format(list) : list;
+      });
       this._parent.formChange(list);
       this.$emit("change", list);
     },

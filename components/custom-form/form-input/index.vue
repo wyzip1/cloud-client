@@ -65,11 +65,11 @@ export default {
   font-size: 14px;
   border: none;
   outline: none;
-  height: 20px;
-  box-sizing: border-box;
+  background-color: transparent;
 
   input {
-    height: 20px;
+    border: none;
+    outline: none;
     min-height: unset;
   }
 }
