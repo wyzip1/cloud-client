@@ -1,0 +1,6 @@
+$base-size: 750;
+
+@function rpx($value) {
+  // @return 100vw / $base-size * $value;
+  @return calc(100vw / $base-size * $value) 
+}
