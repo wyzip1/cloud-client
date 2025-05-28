@@ -1,4 +1,4 @@
-import { arrayMethods } from "./array.js";
+import arrayMethods from "./array";
 import {
   def,
   isObject,
@@ -6,7 +6,8 @@ import {
   setValue,
   getFullKey,
   protoAugment,
-} from "./utils.js";
+  deepClone,
+} from "./utils";
 
 export default function observe(data, superInfo) {
   if (!isObject(data)) return;
@@ -25,6 +26,8 @@ export class Observer {
     this.listeners = [];
 
     if (Array.isArray(data)) {
+      console.log("data", data);
+
       protoAugment(data, arrayMethods);
       this.observeArray(data);
       return;
@@ -61,11 +64,13 @@ export class Observer {
 
   useState(target, keyMap) {
     const syncSate = (key) => {
-      if (!keyMap.some((v) => key.startsWith(v))) return;
-      setValue(target, parsePath(key)(this.state), key);
-      const topKey = key.split(".")[0];
-      if (isObject(target[topKey])) {
-        target[topKey] = { ...target[topKey] };
+      if (!keyMap.some((v) => v.startsWith(key) || key.startsWith(v))) return;
+      const updateKey = keyMap.find((v) => v.startsWith(key)) || key;
+      const value = deepClone(parsePath(updateKey)(this.state));
+      setValue(target, value === undefined ? null : value, updateKey);
+      if (isObject) {
+        const topKey = updateKey.split(".")[0];
+        target[topKey] = deepClone(target[topKey]);
       }
     };
     (keyMap || []).forEach((key) => syncSate(key));

@@ -1,4 +1,4 @@
-import { def, getFullKey } from "./utils.js";
+import { def, getFullKey } from "./utils";
 
 const methodsMap = [
   "push",
@@ -11,7 +11,7 @@ const methodsMap = [
 ];
 
 const arrayProto = Array.prototype;
-export const arrayMethods = Object.create(arrayProto);
+const arrayMethods = Object.create(arrayProto);
 
 methodsMap.forEach((method) => {
   def(arrayMethods, method, function (...arg) {
@@ -32,3 +32,5 @@ methodsMap.forEach((method) => {
     return result;
   });
 });
+
+export default arrayMethods;
