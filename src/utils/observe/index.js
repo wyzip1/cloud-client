@@ -1,3 +1,4 @@
+import { onDestroy } from "../componentHook";
 import arrayMethods from "./array";
 import {
   def,
@@ -9,6 +10,9 @@ import {
   deepClone,
 } from "./utils";
 
+/**
+ * @returns {Observer}
+ */
 export default function observe(data, superInfo) {
   if (!isObject(data)) return;
   let ob;
@@ -48,8 +52,12 @@ export class Observer {
     }
   }
 
-  onChange(fn) {
+  onChange(fn, target) {
     this.listeners.push(fn);
+
+    onDestroy(() => {
+      this.listeners = this.listeners.filter((v) => v !== fn);
+    }, target);
   }
 
   getTopCtx() {
@@ -62,7 +70,7 @@ export class Observer {
     ctx.listeners.forEach((fn) => fn(key, newValue, oldValue));
   }
 
-  useState(target, keyMap) {
+  useState(keyMap, target) {
     const syncSate = (key) => {
       if (!keyMap.some((v) => v.startsWith(key) || key.startsWith(v))) return;
       const updateKey = keyMap.find((v) => v.startsWith(key)) || key;
@@ -74,7 +82,8 @@ export class Observer {
       }
     };
     (keyMap || []).forEach((key) => syncSate(key));
-    this.onChange(syncSate);
+
+    this.onChange(syncSate, target);
   }
 }
 
