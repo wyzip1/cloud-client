@@ -30,8 +30,6 @@ export class Observer {
     this.listeners = [];
 
     if (Array.isArray(data)) {
-      console.log("data", data);
-
       protoAugment(data, arrayMethods);
       this.observeArray(data);
       return;
