@@ -1,21 +1,11 @@
+let requestFn;
 /**
- *
  * @param {yz} yz
  * @param {() => boolean} isDev
  * @returns
  */
-function getRequest(yz, isDev) {
-  /**
-   * 统一请求方法
-   * @param {object} config
-   * @param {string} config.url 接口路径
-   * @param {object} config.data 请求参数
-   * @param {'GET' | 'POST' | 'DELETE' | 'PUT'} config.method 请求类型
-   * @param {number} config.timeout 超时时间
-   * @param {object} config.header 超时时间
-   * @returns {Promise<RequestResponse>}
-   */
-  return (config) => {
+export function registerRequest(yz, isDev) {
+  requestFn = (config) => {
     const dev = isDev();
     return yz
       .request({
@@ -60,14 +50,28 @@ function getRequest(yz, isDev) {
         console.log("-----------------------------------");
         console.log("");
 
-        // yz.logger.error({
-        //   tagName: `${config.method || 'GET'} - ${config.url}`,
-        //   message: '接口请求错误',
-        //   detail: { ...err, params: config.data  }
-        // })
+        yz.logger.error({
+          tagName: `${config.method || 'GET'} - ${config.url}`,
+          message: '接口请求错误',
+          detail: { ...err, params: config.data  }
+        })
         return Promise.reject(err);
       });
   };
+
+  return requestFn;
 }
 
-export default getRequest;
+/**
+ * 统一请求方法
+ * @param {object} config
+ * @param {string} config.url 接口路径
+ * @param {object} config.data 请求参数
+ * @param {'GET' | 'POST' | 'DELETE' | 'PUT'} config.method 请求类型
+ * @param {number} config.timeout 超时时间
+ * @param {object} config.header 超时时间
+ * @returns {Promise<RequestResponse>}
+ */
+export default function request(config) {
+  return requestFn(config)
+}

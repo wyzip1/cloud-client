@@ -32,8 +32,6 @@ declare global {
       }
     },
     app: {
-      getApi: () => ReturnType<typeof registerRequestApi>
-      customRequest: CustomRequest
       getCustomUrl: (path: string) => string
       isDev: () => boolean
     }
