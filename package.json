@@ -11,8 +11,8 @@
     "dev:weapp": "yzc dev:weapp"
   },
   "devDependencies": {
-    "@youzan-cloud/developer-cli": "^1.7.9",
-    "@youzan-cloud/developer-client-presets": "^1.4.24",
+    "@youzan-cloud/developer-cli": "^1.7.4",
+    "@youzan-cloud/developer-client-presets": "^1.4.19",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-prettier": "^4.2.1",
