@@ -1,11 +1,20 @@
-let requestFn;
 /**
+ *
  * @param {yz} yz
  * @param {() => boolean} isDev
- * @returns
  */
-export function registerRequest(yz, isDev) {
-  requestFn = (config) => {
+function getRequest(yz, isDev) {
+  /**
+   * 统一请求方法
+   * @param {object} config
+   * @param {string} config.url 接口路径
+   * @param {object} config.data 请求参数
+   * @param {'GET' | 'POST' | 'DELETE' | 'PUT'} config.method 请求类型
+   * @param {number} config.timeout 超时时间
+   * @param {object} config.header 超时时间
+   * @returns {Promise<RequestResponse>}
+   */
+  return (config) => {
     const dev = isDev();
     return yz
       .request({
@@ -58,20 +67,6 @@ export function registerRequest(yz, isDev) {
         return Promise.reject(err);
       });
   };
-
-  return requestFn;
 }
 
-/**
- * 统一请求方法
- * @param {object} config
- * @param {string} config.url 接口路径
- * @param {object} config.data 请求参数
- * @param {'GET' | 'POST' | 'DELETE' | 'PUT'} config.method 请求类型
- * @param {number} config.timeout 超时时间
- * @param {object} config.header 超时时间
- * @returns {Promise<RequestResponse>}
- */
-export default function request(config) {
-  return requestFn(config)
-}
+export default getRequest;
