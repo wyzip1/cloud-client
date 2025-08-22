@@ -6,7 +6,12 @@
         v-if="node.special && (node.tagName === 'ul' || node.tagName === 'ol')"
         :style="node.attributes.style"
       >
-        <view class="li" v-for="(li, idx) in node.nodes" :key="idx">
+        <view
+          class="li"
+          v-for="(li, idx) in node.nodes"
+          :key="idx"
+          :style="li.attributes.style"
+        >
           <special-node v-for="(item, i) in li.nodes" :key="i" :node="item" />
         </view>
       </view>
