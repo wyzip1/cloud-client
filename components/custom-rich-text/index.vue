@@ -21,14 +21,13 @@
 <script>
 import HTMLParser from "./HTMLParser";
 import renderRichText from "./renderRichText";
-import specialNode from "./special-node.vue";
+import SpecialNode from "./special-node.vue";
 
 export default {
   name: "custom-rich-text",
-  components: { specialNode },
+  components: { SpecialNode },
   props: {
     html: String,
-    nodes: Array,
   },
   watch: {
     html() {

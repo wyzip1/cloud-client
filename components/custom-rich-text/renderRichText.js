@@ -31,13 +31,16 @@ const parseNode = (node) => {
 
   return isSpecialNode
     ? checkSpecialNode(node)
-      ? node
-      : {
+      ? // 特殊节点直接返回
+        node
+      : // 子级存在特殊节点递归解析
+        {
           ...node,
           special: true,
           nodes: node.children.map((node) => parseNode(node)),
         }
-    : {
+    : // 普通内容直接返回html使用richText渲染
+      {
         special: false,
         html: getHtml(node),
       };
