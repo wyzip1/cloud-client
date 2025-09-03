@@ -5,12 +5,12 @@ import createStore from "../../utils/store/index";
 createPage({
   // 页面配置项
   config: {
-    navigationBarTitleText: "子女管理",
+    navigationBarTitleText: "测试页面",
     enablePullDownRefresh: false,
   },
   // 生命周期回调 —— 在页面初始化时执行，建议进行事件/勾子注册
   created() {
-    this.yz.page.store = createStore(this, { name: "123" });
+    createStore(this, { name: "123" });
   },
 })
 ```
@@ -19,7 +19,9 @@ createPage({
 ```html
 <!-- page.vue -->
 <template>
-  <view></view>
+  <view>
+    <input :value="name" @input="onChange" />
+  </view>
 </template>
 
 <script>
@@ -36,7 +38,7 @@ export default {
     useState(this, ["name"]);
   },
   methods: {
-    onChange(value) {
+    onChange({ value }) {
       setState(this, { name: value })
     }
   }
