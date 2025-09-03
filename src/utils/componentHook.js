@@ -7,16 +7,23 @@ export const onDestroy = (cb, ctx) => {
   };
 };
 
-export const onShow = (cb, ctx) => {
-  if (!ctx.yz.page._onShow) ctx.yz.page._onShow = [];
-  ctx.yz.page._onShow.push(cb);
+/**
+ *
+ * @param {'show' | 'hide' | 'pullDownRefresh' | 'reachBottom' | 'pageScroll'} name
+ * @param {Function} cb
+ * @param {Object} ctx
+ */
+export const onPageEvent = (name, ctx, cb) => {
+  if (!ctx.yz.page._pageEvents) ctx.yz.page._pageEvents = {};
+  if (!ctx.yz.page._pageEvents[name]) ctx.yz.page._pageEvents[name] = [];
+  ctx.yz.page._pageEvents[name].push(cb);
 
   onDestroy(() => {
-    ctx.yz.page._onShow = ctx.yz.page._onShow.filter((v) => v !== cb);
+    ctx.yz.page._onShow = ctx.yz.page._pageEvents[name].filter((v) => v !== cb);
   }, ctx);
 };
 
-export const triggerShow = (ctx) => {
-  if (!Array.isArray(ctx.yz.page._onShow)) return;
-  ctx.yz.page._onShow.forEach((fn) => fn());
+export const triggerPageEvent = (name, ctx) => {
+  if (!Array.isArray((ctx.yz.page._pageEvents || {})[name])) return;
+  ctx.yz.page._pageEvents[name].forEach((fn) => fn());
 };

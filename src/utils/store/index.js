@@ -13,7 +13,7 @@ import {
 /**
  * @returns {Observer}
  */
-export default function observe(data, superInfo) {
+export function observe(data, superInfo) {
   if (!isObject(data)) return;
   let ob;
   if (typeof data.__ob__ === "undefined") {
@@ -68,7 +68,7 @@ export class Observer {
     ctx.listeners.forEach((fn) => fn(key, newValue, oldValue));
   }
 
-  useState(keyMap, target) {
+  useState(target, keyMap) {
     const syncSate = (key) => {
       if (!keyMap.some((v) => v.startsWith(key) || key.startsWith(v))) return;
       const updateKey = keyMap.find((v) => v.startsWith(key)) || key;
@@ -104,3 +104,21 @@ export function defineReactive(target, key, ctx, superInfo) {
     },
   });
 }
+
+export default function createStore(ctx, state) {
+  const ob = observe(state);
+  ctx.yz.page.store = observe(state);
+  return ob;
+}
+
+export const setState = (ctx, value) => {
+  if (!value) return;
+  if (typeof value === "function") value(ctx.yz.page.store.state);
+  else {
+    Object.assign(ctx.yz.page.store.state, value);
+  }
+};
+
+export const useState = (ctx, keyMap) => {
+  ctx.yz.page.store.useState(ctx, keyMap);
+};
