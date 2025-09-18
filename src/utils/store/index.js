@@ -45,8 +45,8 @@ export class Observer {
   }
 
   observeArray(list) {
-    for (let i = 0; i < list.length; i++) {
-      observe(list[i]);
+    for (const item of list) {
+      observe(item);
     }
   }
 
@@ -58,6 +58,14 @@ export class Observer {
     }, target);
   }
 
+  watch(key, target, cb) {
+    this.onChange((k, ...args) => {
+      if (k !== key) return;
+      cb(...args);
+    }, target);
+    cb(this.state[key]);
+  }
+
   getTopCtx() {
     if (!this.superInfo) return this;
     return this.superInfo.ctx.getTopCtx();
@@ -66,6 +74,17 @@ export class Observer {
   update(key, newValue, oldValue) {
     const ctx = this.getTopCtx();
     ctx.listeners.forEach((fn) => fn(key, newValue, oldValue));
+  }
+
+  $set(key, value) {
+    const oldValue = this.state[key];
+    this.state[key] = value;
+    if (Array.isArray(value)) {
+      protoAugment(value, arrayMethods);
+      this.observeArray(value);
+    }
+    defineReactive(this.state, key, this, { key, ctx: this });
+    this.update(key, this.state[key], oldValue);
   }
 
   useState(target, keyMap) {
@@ -105,20 +124,43 @@ export function defineReactive(target, key, ctx, superInfo) {
   });
 }
 
-export default function createStore(ctx, state) {
+export default function createStore(ctx, state = {}, name = "store") {
   const ob = observe(state);
-  ctx.yz.page.store = observe(state);
+  ctx.yz.page[name] = observe(state);
   return ob;
 }
 
-export const setState = (ctx, value) => {
-  if (!value) return;
-  if (typeof value === "function") value(ctx.yz.page.store.state);
-  else {
-    Object.assign(ctx.yz.page.store.state, value);
+export const setState = (ctx, value, name = "store") => {
+  if (!value || !ctx.yz.page[name]) return;
+  let result = value;
+  if (typeof value === "function") {
+    result = value(ctx.yz.page[name].state) || ctx.yz.page[name].state;
+  }
+  for (const key of Object.keys(result)) {
+    if (Object.prototype.hasOwnProperty.call(ctx.yz.page[name].state, key))
+      continue;
+    ctx.yz.page[name].$set(key, result[key]);
+  }
+  Object.assign(ctx.yz.page[name].state, value);
+};
+
+export const useState = (ctx, keyMap, name = "store") => {
+  if (!ctx.yz.page[name]) return;
+  ctx.yz.page[name].useState(ctx, keyMap);
+
+  for (const key of keyMap) {
+    if (Object.prototype.hasOwnProperty.call(ctx.yz.page[name].state, key))
+      continue;
+    ctx.yz.page[name].$set(key, null);
   }
 };
 
-export const useState = (ctx, keyMap) => {
-  ctx.yz.page.store.useState(ctx, keyMap);
+export const useWatch = (key, ctx, cb, name = "store") => {
+  if (!ctx.yz.page[name]) return;
+  ctx.yz.page[name].watch(key, ctx, cb);
+};
+
+export const getState = (ctx, name = "store") => {
+  if (!ctx.yz.page[name]) return;
+  return ctx.yz.page[name].state;
 };

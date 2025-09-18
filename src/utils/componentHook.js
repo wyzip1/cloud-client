@@ -18,9 +18,12 @@ export const onPageEvent = (name, ctx, cb) => {
   if (!ctx.yz.page._pageEvents[name]) ctx.yz.page._pageEvents[name] = [];
   ctx.yz.page._pageEvents[name].push(cb);
 
-  onDestroy(() => {
+  const clearEvent = () => {
     ctx.yz.page._onShow = ctx.yz.page._pageEvents[name].filter((v) => v !== cb);
-  }, ctx);
+  };
+
+  onDestroy(clearEvent, ctx);
+  return clearEvent;
 };
 
 export const triggerPageEvent = (name, ctx) => {
