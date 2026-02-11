@@ -8,11 +8,12 @@
     "build": "yzc build",
     "clean": "yzc clean",
     "save": "yzc save",
-    "dev:weapp": "yzc dev:weapp"
+    "dev:weapp": "yzc dev:weapp",
+    "openapi": "node scripts/generate-api.js"
   },
   "devDependencies": {
     "@youzan-cloud/developer-cli": "^1.7.11",
-    "@youzan-cloud/developer-client-presets": "^1.4.27",
+    "@youzan-cloud/developer-client-presets": "1.4.33",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-prettier": "^4.2.1",

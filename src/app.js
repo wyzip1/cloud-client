@@ -1,11 +1,15 @@
 import registerRequestApi from "./api/index";
+import registerSdkGenApi from "./api/sdk.gen";
 import getRequest from "./api/request";
 
 extendApp({
   onLaunch() {
-    console.log("App  onLaunch");
+    yz.console.log("App  onLaunch");
     this._customRequest = getRequest(yz, () => this.isDev());
-    this.api = registerRequestApi(this._customRequest);
+    this.api = {
+      ...registerRequestApi(this._customRequest, yz, () => this.isDev()),
+      ...registerSdkGenApi(this._customRequest, yz, () => this.isDev()),
+    };
   },
   methods: {
     getApi() {
@@ -19,7 +23,7 @@ extendApp({
     },
     isDev() {
       const { shop = {} } = this.yz.data || {};
-      const devKdtIds = []
+      const devKdtIds = [];
       return devKdtIds.includes(shop.kdtId);
     },
   },

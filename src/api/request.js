@@ -40,24 +40,24 @@ function getRequest(yz, isDev) {
           return Promise.reject(res);
         }
 
-        console.log("");
-        console.log("-----------------------------------");
-        console.log(`request URL - ${config.method || "GET"}:`, config.url);
-        console.log("request params:", { ...config.data, dev });
-        console.log(`request success:`, res);
-        console.log("-----------------------------------");
-        console.log("");
+        yz.console.log("");
+        yz.console.log("-----------------------------------");
+        yz.console.log(`request URL - ${config.method || "GET"}:`, config.url);
+        yz.console.log("request params:", { ...config.data, dev });
+        yz.console.log(`request success:`, res);
+        yz.console.log("-----------------------------------");
+        yz.console.log("");
 
         return res.data;
       })
       .catch((err) => {
-        console.log("");
-        console.log("-----------------------------------");
-        console.log(`request URL - ${config.method || "GET"}:`, config.url);
-        console.log("request params:", { ...config.data, dev });
-        console.log("request error:", err);
-        console.log("-----------------------------------");
-        console.log("");
+        yz.console.log("");
+        yz.console.log("-----------------------------------");
+        yz.console.log(`request URL - ${config.method || "GET"}:`, config.url);
+        yz.console.log("request params:", { ...config.data, dev });
+        yz.console.log("request error:", err);
+        yz.console.log("-----------------------------------");
+        yz.console.log("");
 
         yz.logger.error({
           tagName: `${config.method || 'GET'} - ${config.url}`,

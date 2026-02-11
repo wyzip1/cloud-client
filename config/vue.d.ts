@@ -1,8 +1,11 @@
 import type Vue from 'vue'
 import registerRequestApi from '../src/api/index';
+import registerSdkGenApi from '../src/api/sdk.gen';
 import getRequest from '../src/api/request';
 
 type CustomRequest = ReturnType<typeof getRequest>;
+type RequestApi = ReturnType<typeof registerRequestApi>;
+type SdkGenApi = ReturnType<(typeof registerSdkGenApi)>;
 
 declare global {
   interface YzPageApi {
@@ -32,7 +35,7 @@ declare global {
       }
     },
     app: {
-      getApi: () => ReturnType<typeof registerRequestApi>
+      getApi: () => RequestApi & SdkGenApi
       customRequest: CustomRequest
       getCustomUrl: (path: string) => string
       isDev: () => boolean

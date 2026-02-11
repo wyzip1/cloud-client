@@ -15,7 +15,11 @@
     "createPage": "readonly",
     "extendPage": "readonly",
     "extendApp": "readonly",
-    "page": "readonly"
+    "page": "readonly",
+    "require": "readonly",
+    "process": "readonly",
+    "__dirname": "readonly",
+    "module": "readonly"
   },
   "rules": {
     "no-unused-vars": [2, { "vars": "all", "args": "none" }],
