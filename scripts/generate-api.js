@@ -317,6 +317,8 @@ function generateJSDoc(operation, path, method, typeNames) {
     jsdoc += ` * ${operation.description}\n`;
   }
 
+  let hasQueryParamAdded = false;
+
   if (operation.parameters) {
     operation.parameters.forEach((param) => {
       if (param.in === "body") {
@@ -330,15 +332,13 @@ function generateJSDoc(operation, path, method, typeNames) {
         const description = param.description ? ` - ${param.description}` : "";
         jsdoc += ` * @param {${type}} ${param.name}${description}\n`;
       } else if (param.in === "query") {
-        if (typeNames.queryType) {
-          jsdoc += ` * @param {import("./type").${typeNames.queryType}} query - 查询参数\n`;
-        } else {
-          const type = convertType(param.type) || "string";
-          const description = param.description
-            ? ` - ${param.description}`
-            : "";
-          jsdoc += ` * @param {${type}} [query.${param.name}]${description}\n`;
+        if (!hasQueryParamAdded) {
+          jsdoc += ` * @param {object} [query] - 请求参数\n`;
+          hasQueryParamAdded = true;
         }
+        const type = convertType(param.type) || "string";
+        const description = param.description ? ` - ${param.description}` : "";
+        jsdoc += ` * @param {${type}} [query.${param.name}]${description}\n`;
       }
     });
   }
@@ -569,7 +569,7 @@ function collectTypeDefinitions(swaggerConfig) {
 function generateTypeDefinitionsFile(typeDefs) {
   let content = "/**\n";
   content += " * Auto-generated TypeScript type definitions from Swagger\n";
-  content += " * Generated on: " + new Date().toISOString() + "\n";
+  // content += " * Generated on: " + new Date().toISOString() + "\n";
   content += " */\n\n";
 
   typeDefs.forEach((typeDef) => {
@@ -588,7 +588,7 @@ function generateTypeDefinitionsFile(typeDefs) {
 function generateApiFile(swaggerConfig) {
   let fileContent = "/**\n";
   fileContent += " * Auto-generated API methods from Swagger\n";
-  fileContent += " * Generated on: " + new Date().toISOString() + "\n";
+  // fileContent += " * Generated on: " + new Date().toISOString() + "\n";
   fileContent += " */\n\n";
 
   fileContent += "/**\n";
@@ -689,9 +689,6 @@ async function writeFile(content, outputPath) {
 async function main(options) {
   try {
     console.log("Fetching Swagger configuration...");
-    if (!options.swaggerUrl) {
-      throw new Error("config swaggerUrl is required");
-    }
     const swaggerConfig = await fetchSwaggerConfig(options.swaggerUrl);
 
     console.log("Collecting type definitions...");
