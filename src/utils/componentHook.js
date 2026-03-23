@@ -26,7 +26,15 @@ export const onPageEvent = (name, ctx, cb) => {
   return clearEvent;
 };
 
-export const triggerPageEvent = (name, ctx) => {
-  if (!Array.isArray((ctx.yz.page._pageEvents || {})[name])) return;
-  ctx.yz.page._pageEvents[name].forEach((fn) => fn());
+export const triggerPageEvent = (name, data, ctx) => {
+  const eventName = (data || {}).isError ? `${name}Err` : name;
+  if (!Array.isArray((ctx.yz.page._pageEvents || {})[eventName])) return;
+  ctx.yz.page._pageEvents[eventName].forEach((fn) => fn(data));
+};
+
+export const onPageEventAsync = (name, ctx) => {
+  return new Promise((resolve, reject) => {
+    onPageEvent(name, ctx, resolve);
+    onPageEvent(`${name}Err`, ctx, reject);
+  });
 };
