@@ -108,13 +108,19 @@ async function fetchSwaggerConfig(urlOrPath) {
 function generateMethodName(path, method) {
   let name = path.replace(/^\/api\/v\d+/, "");
   name = name.replace(/\{([^}]+)\}/g, "$1");
+
+  const toCamelCase = (str) => {
+    return str.replace(/[-_]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""));
+  };
+
   const parts = name.split("/").filter(Boolean);
   let methodName = parts
     .map((part, index) => {
+      const camelPart = toCamelCase(part);
       if (index === 0) {
-        return part.toLowerCase();
+        return camelPart.charAt(0).toLowerCase() + camelPart.slice(1);
       }
-      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+      return camelPart.charAt(0).toUpperCase() + camelPart.slice(1);
     })
     .join("");
 
@@ -129,13 +135,11 @@ function generateMethodName(path, method) {
 
 /**
  * 生成类型定义名称
- * @param {string} path - API路径
- * @param {string} method - HTTP方法
+ * @param {string} methodName - API方法名
  * @param {string} suffix - 后缀
  * @returns {string} 类型定义名称
  */
-function generateTypeName(path, method, suffix) {
-  const methodName = generateMethodName(path, method);
+function generateTypeName(methodName, suffix) {
   const capitalizedName =
     methodName.charAt(0).toUpperCase() + methodName.slice(1);
   return capitalizedName + suffix;
@@ -366,7 +370,7 @@ function generateJSDoc(operation, path, method, typeNames) {
  * @returns {Object} 包含methodName和jsdoc的对象
  */
 function generateMethodNameAndJSDoc(operation, path, method, typeNames) {
-  const methodName = generateMethodName(path, method);
+  const methodName = operation._methodName || generateMethodName(path, method);
   const jsdoc = generateJSDoc(operation, path, method, typeNames);
   return { methodName, jsdoc };
 }
@@ -477,6 +481,7 @@ function generateBaseResponseType(baseResponseType, typeDefs) {
 function collectTypeDefinitions(swaggerConfig) {
   const typeDefs = [];
   const processedTypes = new Set();
+  const usedMethodNames = new Set();
 
   if (!swaggerConfig.paths) {
     return typeDefs;
@@ -510,6 +515,16 @@ function collectTypeDefinitions(swaggerConfig) {
         return;
       }
 
+      let baseName = generateMethodName(path, method);
+      let uniqueName = baseName;
+      let counter = 1;
+      while (usedMethodNames.has(uniqueName)) {
+        uniqueName = `${baseName}${counter}`;
+        counter++;
+      }
+      usedMethodNames.add(uniqueName);
+      operation._methodName = uniqueName;
+
       const typeNames = {
         requestType: null,
         queryType: null,
@@ -519,7 +534,7 @@ function collectTypeDefinitions(swaggerConfig) {
       if (operation.parameters) {
         operation.parameters.forEach((param) => {
           if (param.in === "body" && param.schema) {
-            typeNames.requestType = generateTypeName(path, method, "Request");
+            typeNames.requestType = generateTypeName(uniqueName, "Request");
             generateTypeDefinition(
               param.schema,
               typeNames.requestType,
@@ -528,7 +543,7 @@ function collectTypeDefinitions(swaggerConfig) {
               typeDefs
             );
           } else if (param.in === "query" && param.schema) {
-            typeNames.queryType = generateTypeName(path, method, "Query");
+            typeNames.queryType = generateTypeName(uniqueName, "Query");
             generateTypeDefinition(
               param.schema.schema || param.schema,
               typeNames.queryType,
@@ -543,7 +558,7 @@ function collectTypeDefinitions(swaggerConfig) {
       if (operation.responses && operation.responses["200"]) {
         const response = operation.responses["200"];
         if (response.schema) {
-          typeNames.responseType = generateTypeName(path, method, "Response");
+          typeNames.responseType = generateTypeName(uniqueName, "Response");
           generateTypeDefinition(
             response.schema,
             typeNames.responseType,
@@ -619,7 +634,9 @@ function generateApiFile(swaggerConfig) {
         if (!["get", "post", "put", "delete", "patch"].includes(method)) {
           return;
         }
-        methodNames.push(generateMethodName(path, method));
+        methodNames.push(
+          operation._methodName || generateMethodName(path, method)
+        );
       });
     });
   }
