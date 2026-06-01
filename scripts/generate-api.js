@@ -43,6 +43,133 @@ function convertType(backendType) {
   return TYPE_MAPPING[backendType] || backendType || "any";
 }
 
+const INVALID_IDENTIFIER_CHAR_REGEXP = /[^A-Za-z0-9_\u4e00-\u9fa5]/g;
+const CAMEL_CASE_SEPARATOR_REGEXP = /[^A-Za-z0-9\u4e00-\u9fa5]+/g;
+const VALID_NAME_START_REGEXP = /^[A-Za-z\u4e00-\u9fa5]/;
+const RESERVED_WORDS = new Set([
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "export",
+  "extends",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "import",
+  "in",
+  "instanceof",
+  "new",
+  "return",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+  "let",
+  "static",
+  "enum",
+  "await",
+  "implements",
+  "package",
+  "protected",
+  "interface",
+  "private",
+  "public",
+]);
+
+function capitalizeNamePart(name) {
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+function sanitizeNamePart(part) {
+  return part.replace(INVALID_IDENTIFIER_CHAR_REGEXP, "");
+}
+
+function toCamelIdentifierName(name) {
+  const parts = String(name || "")
+    .split(CAMEL_CASE_SEPARATOR_REGEXP)
+    .map(sanitizeNamePart)
+    .filter(Boolean);
+
+  return parts
+    .map((part, index) => (index === 0 ? part : capitalizeNamePart(part)))
+    .join("");
+}
+
+/**
+ * 将命名转换为合法驼峰标识符，非法字符直接移除
+ * @param {string} name - 原始名称
+ * @param {string} fallback - 兜底名称
+ * @returns {string} 合法标识符名称
+ */
+function normalizeIdentifierName(name, fallback) {
+  const normalizedFallback = toCamelIdentifierName(fallback) || "generatedName";
+  let normalized = toCamelIdentifierName(name);
+
+  if (!normalized) {
+    normalized = normalizedFallback;
+  }
+
+  if (!VALID_NAME_START_REGEXP.test(normalized)) {
+    normalized =
+      normalizedFallback.charAt(0).toLowerCase() +
+      normalizedFallback.slice(1) +
+      capitalizeNamePart(normalized);
+  }
+
+  if (RESERVED_WORDS.has(normalized)) {
+    normalized =
+      normalizedFallback.charAt(0).toLowerCase() +
+      normalizedFallback.slice(1) +
+      capitalizeNamePart(normalized);
+  }
+
+  return normalized;
+}
+
+/**
+ * 生成不重复的命名
+ * @param {string} name - 原始名称
+ * @param {Set<string>} usedNames - 已使用名称集合
+ * @returns {string} 唯一名称
+ */
+function ensureUniqueName(name, usedNames) {
+  let uniqueName = name;
+  let counter = 1;
+
+  while (usedNames.has(uniqueName)) {
+    uniqueName = `${name}${counter}`;
+    counter++;
+  }
+
+  usedNames.add(uniqueName);
+  return uniqueName;
+}
+
+/**
+ * 获取 $ref 中的原始定义名
+ * @param {string} ref - Swagger $ref
+ * @returns {string} 原始定义名
+ */
+function getRefName(ref) {
+  return decodeURIComponent(ref.replace(/.*\//, ""));
+}
+
 /**
  * 从URL或本地文件获取Swagger配置
  * @param {string} urlOrPath - Swagger配置文件的URL或本地路径
@@ -109,18 +236,14 @@ function generateMethodName(path, method) {
   let name = path.replace(/^\/api\/v\d+/, "");
   name = name.replace(/\{([^}]+)\}/g, "$1");
 
-  const toCamelCase = (str) => {
-    return str.replace(/[-_]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""));
-  };
-
   const parts = name.split("/").filter(Boolean);
   let methodName = parts
     .map((part, index) => {
-      const camelPart = toCamelCase(part);
-      if (index === 0) {
-        return camelPart.charAt(0).toLowerCase() + camelPart.slice(1);
+      const normalizedPart = normalizeIdentifierName(part, "api");
+      if (index === 0 && normalizedPart.charAt(0) !== "_") {
+        return normalizedPart.charAt(0).toLowerCase() + normalizedPart.slice(1);
       }
-      return camelPart.charAt(0).toUpperCase() + camelPart.slice(1);
+      return normalizedPart.charAt(0).toUpperCase() + normalizedPart.slice(1);
     })
     .join("");
 
@@ -142,7 +265,7 @@ function generateMethodName(path, method) {
 function generateTypeName(methodName, suffix) {
   const capitalizedName =
     methodName.charAt(0).toUpperCase() + methodName.slice(1);
-  return capitalizedName + suffix;
+  return normalizeIdentifierName(capitalizedName + suffix, "GeneratedType");
 }
 
 /**
@@ -151,7 +274,7 @@ function generateTypeName(methodName, suffix) {
  * @returns {string} 清理后的类型名称
  */
 function cleanTypeName(typeName) {
-  return typeName.replace(/«/g, "<").replace(/»/g, ">");
+  return normalizeIdentifierName(typeName, "GeneratedType");
 }
 
 /**
@@ -167,10 +290,11 @@ function resolveType(schema, swaggerConfig, processedTypes) {
   }
 
   if (schema.$ref) {
-    const refName = cleanTypeName(schema.$ref.replace(/.*\//, ""));
+    const originalRefName = getRefName(schema.$ref);
+    const refName = cleanTypeName(originalRefName);
     const definitions =
       swaggerConfig.definitions || swaggerConfig.components?.schemas || {};
-    const refSchema = definitions[cleanTypeName(refName)];
+    const refSchema = definitions[originalRefName] || definitions[refName];
 
     if (refSchema) {
       return refName;
@@ -215,17 +339,19 @@ function generateTypeDefinition(
     return;
   }
 
+  typeName = cleanTypeName(typeName);
+
   if (processedTypes.has(typeName)) {
     return;
   }
   processedTypes.add(typeName);
 
   if (schema.$ref) {
-    const refName = cleanTypeName(schema.$ref.replace(/.*\//, ""));
-    const originalRefName = schema.$ref.replace(/.*\//, "");
+    const originalRefName = getRefName(schema.$ref);
+    const refName = cleanTypeName(originalRefName);
     const definitions =
       swaggerConfig.definitions || swaggerConfig.components?.schemas || {};
-    const refSchema = definitions[originalRefName];
+    const refSchema = definitions[originalRefName] || definitions[refName];
 
     if (refSchema) {
       typeDefs.push(`export type ${typeName} = ${refName};\n`);
@@ -247,10 +373,11 @@ function generateTypeDefinition(
     typeDefs.push(`export type ${typeName} = Array<${itemType}>;\n`);
 
     if (schema.items.$ref) {
-      const refName = schema.items.$ref.replace(/.*\//, "");
+      const originalRefName = getRefName(schema.items.$ref);
+      const refName = cleanTypeName(originalRefName);
       const definitions =
         swaggerConfig.definitions || swaggerConfig.components?.schemas || {};
-      const refSchema = definitions[refName];
+      const refSchema = definitions[originalRefName] || definitions[refName];
       if (refSchema) {
         generateTypeDefinition(
           refSchema,
@@ -266,20 +393,26 @@ function generateTypeDefinition(
 
   if (schema.type === "object" && schema.properties) {
     let typeDef = `export interface ${typeName} {\n`;
+    const usedPropertyNames = new Set();
     Object.entries(schema.properties).forEach(([propName, propSchema]) => {
+      const normalizedPropName = ensureUniqueName(
+        normalizeIdentifierName(propName, "field"),
+        usedPropertyNames
+      );
       const type = resolveType(propSchema, swaggerConfig, processedTypes);
       const optional =
         !schema.required || !schema.required.includes(propName) ? "?" : "";
       const description = propSchema.description
         ? ` // ${propSchema.description}`
         : "";
-      typeDef += `  ${propName}${optional}: ${type};${description}\n`;
+      typeDef += `  ${normalizedPropName}${optional}: ${type};${description}\n`;
 
       if (propSchema.$ref) {
-        const refName = propSchema.$ref.replace(/.*\//, "");
+        const originalRefName = getRefName(propSchema.$ref);
+        const refName = cleanTypeName(originalRefName);
         const definitions =
           swaggerConfig.definitions || swaggerConfig.components?.schemas || {};
-        const refSchema = definitions[refName];
+        const refSchema = definitions[originalRefName] || definitions[refName];
         if (refSchema) {
           generateTypeDefinition(
             refSchema,
@@ -334,7 +467,8 @@ function generateJSDoc(operation, path, method, typeNames) {
       } else if (param.in === "path") {
         const type = convertType(param.type) || "string";
         const description = param.description ? ` - ${param.description}` : "";
-        jsdoc += ` * @param {${type}} ${param.name}${description}\n`;
+        const paramName = normalizeIdentifierName(param.name, "param");
+        jsdoc += ` * @param {${type}} ${paramName}${description}\n`;
       } else if (param.in === "query") {
         if (!hasQueryParamAdded) {
           jsdoc += ` * @param {object} [query] - 请求参数\n`;
@@ -342,7 +476,8 @@ function generateJSDoc(operation, path, method, typeNames) {
         }
         const type = convertType(param.type) || "string";
         const description = param.description ? ` - ${param.description}` : "";
-        jsdoc += ` * @param {${type}} [query.${param.name}]${description}\n`;
+        const paramName = normalizeIdentifierName(param.name, "param");
+        jsdoc += ` * @param {${type}} [query.${paramName}]${description}\n`;
       }
     });
   }
@@ -395,20 +530,30 @@ function generateApiMethod(operation, path, method, typeNames) {
   let pathParams = [];
   let hasBodyParam = false;
   let hasQueryParam = false;
+  const usedParamNames = new Set();
 
   if (operation.parameters) {
     operation.parameters.forEach((param) => {
       if (param.in === "path") {
-        params.push(param.name);
-        pathParams.push(param.name);
+        const paramName = ensureUniqueName(
+          normalizeIdentifierName(param.name, "param"),
+          usedParamNames
+        );
+        params.push(paramName);
+        pathParams.push({
+          name: param.name,
+          paramName,
+        });
       } else if (param.in === "body") {
         if (!params.includes("data")) {
           params.push("data");
+          usedParamNames.add("data");
         }
         hasBodyParam = true;
       } else if (param.in === "query") {
         if (!hasQueryParam) {
           params.push("query");
+          usedParamNames.add("query");
           hasQueryParam = true;
         }
       }
@@ -426,10 +571,15 @@ function generateApiMethod(operation, path, method, typeNames) {
 
   let url = path;
   if (pathParams.length > 0) {
-    url = path.replace(
-      /\{([^}]+)\}/g,
-      (match, paramName) => `\${${paramName}}`
-    );
+    const pathParamMap = pathParams.reduce((map, param) => {
+      map[param.name] = param.paramName;
+      return map;
+    }, {});
+    url = path.replace(/\{([^}]+)\}/g, (match, paramName) => {
+      const normalizedParamName =
+        pathParamMap[paramName] || normalizeIdentifierName(paramName, "param");
+      return `\${${normalizedParamName}}`;
+    });
     methodBody += `    const url = \`${url}\`;\n`;
   } else {
     methodBody += `    const url = "${url}";\n`;
@@ -462,11 +612,16 @@ function generateBaseResponseType(baseResponseType, typeDefs) {
   }
 
   let typeDef = "export interface BaseResponse<T> {\n";
+  const usedPropertyNames = new Set();
   Object.entries(baseResponseType).forEach(([key, type]) => {
+    const normalizedKey = ensureUniqueName(
+      normalizeIdentifierName(key, "field"),
+      usedPropertyNames
+    );
     if (type === "<T>") {
-      typeDef += `  ${key}: T;\n`;
+      typeDef += `  ${normalizedKey}: T;\n`;
     } else {
-      typeDef += `  ${key}: ${type};\n`;
+      typeDef += `  ${normalizedKey}: ${type};\n`;
     }
   });
   typeDef += "}\n";
