@@ -482,6 +482,8 @@ function generateJSDoc(operation, path, method, typeNames) {
     });
   }
 
+  jsdoc += ` * @param {Object} [requestOptions] - 自定义请求配置\n`;
+
   if (typeNames.responseType) {
     if (config.baseResponseType) {
       jsdoc += ` * @returns {Promise<import("./type").BaseResponse<import("./type").${typeNames.responseType}>>} - 响应数据\n`;
@@ -565,6 +567,8 @@ function generateApiMethod(operation, path, method, typeNames) {
     hasBodyParam = true;
   }
 
+  params.push("requestOptions = {}");
+
   let methodBody = `  ${jsdoc}  const ${methodName} = (${params.join(
     ", "
   )}) => {\n`;
@@ -586,6 +590,7 @@ function generateApiMethod(operation, path, method, typeNames) {
   }
 
   methodBody += `    return request({\n`;
+  methodBody += `      ...requestOptions,\n`;
   methodBody += `      url,\n`;
   methodBody += `      method: "${method.toUpperCase()}",\n`;
 
